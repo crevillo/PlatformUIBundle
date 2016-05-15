@@ -180,6 +180,27 @@ YUI.add('ez-locationmodel', function (Y) {
         },
 
         /**
+         * Swap the location with other location
+         * 
+         * @method swap
+         * @param {Object} options the required for the swap         *
+         * @param {Object} options.api (required) the JS REST client instance
+         * @param {eZ.Location} destination Location where the given one will be relocated
+         * @param {Function} callback a callback executed when the operation is finished
+         */
+        swap: function(options, destinationLocation, callback) {
+            var locationService = options.api.getContentService();
+
+            locationService.swapLocation(this.get('id'), destinationLocation.get('id'), function(error, response) {
+                if ( error ) {
+                    callback(error);
+                    return;
+                }
+                callback(error, response);
+            });
+        },
+
+        /**
          * Deletes the location in the repository.
          *
          * @protected

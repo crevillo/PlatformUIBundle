@@ -11,6 +11,7 @@ YUI.add('ez-locationviewlocationstabview-tests', function (Y) {
         addLocationTest,
         setMainLocationTest,
         removeLocationTest,
+        swapLocationTest,
         Assert = Y.Assert,
         Mock = Y.Mock;
 
@@ -845,6 +846,95 @@ YUI.add('ez-locationviewlocationstabview-tests', function (Y) {
         }
     });
 
+    swapLocationTest = new Y.Test.Case({
+        name: "eZ LocationViewLocationsTabView swap location test",
+        setUp: function () {
+            this.contentMock = new Mock();
+            this.locations = [this.locationMock, this.locationMock];
+            this.resources = {
+                MainLocation: '/main/location/id'
+            };
+
+            Mock.expect(this.contentMock, {
+                'method': 'get',
+                'args': ['resources'],
+                returns: this.resources
+            });
+
+            this.view = new Y.eZ.LocationViewLocationsTabView({
+                content: this.contentMock,
+                container: '.container'
+            });
+        },
+
+        tearDown: function () {
+            this.view.destroy();
+            delete this.view;
+        },
+
+        "Should fire `swapLocation` event": function () {
+            var eventFired = false,
+                that = this,
+                locationIdForSwap,
+                swapButton;
+
+            this.view.render();
+
+            swapButton = this.view.get('container').one('.ez-locations-swap-button');
+            locationIdForSwap = swapButton.getAttribute('data-location-id');
+
+            this.view.on('swapLocation', function (e) {
+                eventFired = true;
+
+                Assert.areSame(
+                    e.location,
+                    that.location,
+                    "The event facade should contain the location"
+                );
+                Assert.isFunction(e.afterSwapLocationCallback, 'The event facade should contain callback function');
+            });
+
+            swapButton.simulateGesture('tap', function () {
+                that.resume(function (e) {
+                    Y.Assert.isTrue(
+                        eventFired,
+                        "The `swapLocation` event should have been fired"
+                    );
+                });
+            });
+            this.wait();
+        },
+
+        "Should fire `loadLocations` event after swaping locations": function () {
+            var loadLocationsFired = false,
+                that = this;
+
+            this.view.on('swapLocation', function (e) {
+                e.afterSwapLocationCallback();
+            });
+            this.view.on('loadLocations', function (e) {
+                loadLocationsFired = true;
+
+                Assert.areSame(
+                    e.content,
+                    that.contentMock,
+                    'The event facade should contain the content'
+                );
+            });
+
+            this.view.render();
+            this.view.get('container').one('.ez-locations-swap-button').simulateGesture('tap', function () {
+                that.resume(function () {
+                    Y.Assert.isTrue(
+                        loadLocationsFired,
+                        "The `loadLocations` event should have been fired"
+                    );
+                });
+            });
+            this.wait();
+        }
+    });
+
     Y.Test.Runner.setName("eZ Location View Locations Tab View tests");
     Y.Test.Runner.add(attributesTest);
     Y.Test.Runner.add(renderTest);
@@ -854,4 +944,5 @@ YUI.add('ez-locationviewlocationstabview-tests', function (Y) {
     Y.Test.Runner.add(addLocationTest);
     Y.Test.Runner.add(setMainLocationTest);
     Y.Test.Runner.add(removeLocationTest);
+    Y.Test.Runner.add(swapLocationTest);
 }, '', {requires: ['test', 'ez-locationviewlocationstabview', 'node-event-simulate']});

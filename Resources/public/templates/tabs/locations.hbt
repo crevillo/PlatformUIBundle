@@ -18,6 +18,7 @@
                             <th>Sub items</th>
                             <th colspan="2">Visibility</th>
                             <th>Main</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -58,6 +59,13 @@
                                     <input type="radio" value="1" class="ez-main-location-radio"
                                            data-location-id="{{ id }}"{{#if isMainLocation}} checked="checked"{{/if}}>
                                 </td>
+                                <td class="ez-table-data-swap-location">
+                                    <button
+                                        data-location-id="{{id}}"
+                                        class="ez-locations-swap-button pure-button ez-button">
+                                        Swap
+                                    </button>
+                                </div>
                             </tr>
                         {{/each}}
                     </tbody>
