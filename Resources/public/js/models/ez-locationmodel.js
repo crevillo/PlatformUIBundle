@@ -189,15 +189,9 @@ YUI.add('ez-locationmodel', function (Y) {
          * @param {Function} callback a callback executed when the operation is finished
          */
         swap: function(options, destinationLocation, callback) {
-            var locationService = options.api.getContentService();
+            var contentService = options.api.getContentService();
 
-            locationService.swapLocation(this.get('id'), destinationLocation.get('id'), function(error, response) {
-                if ( error ) {
-                    callback(error);
-                    return;
-                }
-                callback(error, response);
-            });
+            contentService.swapLocation(this.get('id'), destinationLocation.get('id'), callback);
         },
 
         /**

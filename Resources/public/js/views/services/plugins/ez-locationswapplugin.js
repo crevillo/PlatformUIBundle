@@ -25,29 +25,27 @@ YUI.add('ez-locationswapplugin', function (Y) {
     Y.eZ.Plugin.LocationSwap = Y.Base.create('locationswapplugin', Y.eZ.Plugin.ViewServiceBase, [], {
 
         initializer: function () {
-            this.onHostEvent('*:swapLocation', this._swapLocationSelect);
+            this.onHostEvent('*:swapLocation', this._selectDestinationLocation);
         },
 
         /**
          * swapLocation event handler, launch the universal discovery widget
          * to choose the location you want to swap with the given one
          *
-         * @method _swapLocationSelect
+         * @method _selectDestinationLocation
          * @private
          * @param {EventFacade} e swapLocation event facade
          */
-        _swapLocationSelect: function (e) {
+        _selectDestinationLocation: function (e) {
             var service = this.get('host');
 
             service.fire('contentDiscover', {
                 config: {
                     title: "Select the location you want to swap with the given one",
-                    contentDiscoveredHandler: Y.bind(this._swapLocation, this),
+                    contentDiscoveredHandler: Y.bind(this._swapLocations, this),
                     multiple: false,
                     isSelectable: true,
-                    data: {
-                        afterSwapLocationCallback: e.afterSwapLocationCallback
-                    }
+                    data: {}
                 },
             });
         },
@@ -59,16 +57,14 @@ YUI.add('ez-locationswapplugin', function (Y) {
          * @protected
          * @param {EventFacade} e
          */
-        _swapLocation: function (e) {
+        _swapLocations: function (e) {
             var service = this.get('host'),
+                app = service.get('app'),
                 capi = service.get('capi'),
                 location = service.get('location'),
                 notificationIdentifier = 'swap-location-' + location.get('id'),
                 data = e.target.get('data'),
                 destinationLocation = e.selection.location,
-                errNotificationIdentifier = 'swap-location-' + location.get('id'),
-                locationSwaped = false,
-                stack = new Y.Parallel(),
                 that = this;
 
             this._notify(
@@ -78,31 +74,30 @@ YUI.add('ez-locationswapplugin', function (Y) {
                 5
             );
 
-            location.swap({api: capi}, destinationLocation, stack.add(function (error) {
+            location.swap({api: capi}, destinationLocation, function (error) {
                 if (error) {
-                    return;
-                }
-
-                locationSwaped = true;
-            }));
-
-            stack.done(function () {
-                if (locationSwaped) {
                     that._notify(
-                        "Location for '" + location.get('contentInfo').get('name') + "' " +
+                        "Swaping location for '" + location.get('contentInfo').get('name') + "' failed",
+                        notificationIdentifier,
+                        'error',
+                        0
+                    );
+                }
+                else {
+                    var contentInfo = location.get('contentInfo');
+                    that._notify(
+                        "Location for '" + contentInfo.get('name') + "' " +
                         "has been swapped with '" + destinationLocation.get('contentInfo').get('name') + "'",
                         notificationIdentifier,
                         'done',
                         5
                     );
-                    data.afterSwapLocationCallback();
-                } else {
-                    that._notify(
-                        "Swaping location for '" + location.get('contentInfo').get('name') + "' failed",
-                        errNotificationIdentifier,
-                        'error',
-                        0
-                    );
+
+                    console.log('tanta');
+                    app.navigateTo('viewLocation', {
+                        id: location.get('id'),
+                        languageCode: contentInfo.get('mainLanguageCode')
+                    });
                 }
             });
         },

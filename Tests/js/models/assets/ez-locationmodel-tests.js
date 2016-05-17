@@ -952,7 +952,7 @@ YUI.add('ez-locationmodel-tests', function (Y) {
             delete this.model;
         },
 
-        "Should swap the location": function () {
+        "Should swap the locations": function () {
             var callback = function () {},
                 options = {api: this.capiMock};
 
@@ -962,7 +962,7 @@ YUI.add('ez-locationmodel-tests', function (Y) {
             });
             Y.Mock.expect(this.contentServiceMock, {
                 method: 'swapLocation',
-                args: [this.locationId, this.destinationLocationId, Y.Mock.Value.Function],
+                args: [this.locationId, this.destinationLocationId, callback],
             });
 
             this.model.swap(options,this.destinationLocation, callback);

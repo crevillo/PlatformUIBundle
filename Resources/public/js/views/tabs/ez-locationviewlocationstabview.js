@@ -122,12 +122,9 @@ YUI.add('ez-locationviewlocationstabview', function (Y) {
              *
              * @event swapLocation
              * @param {eZ.Location} location the content to be swaped
-             * @param {Function} afterSwapLocationCallback callback function that will be called after
-             *                   swaping location
              */
             this.fire('swapLocation', {
                 location: this.get('location'),
-                afterSwapLocationCallback: Y.bind(this._afterSwapCallback, this)
             });
         },
 
@@ -139,16 +136,6 @@ YUI.add('ez-locationviewlocationstabview', function (Y) {
          * @protected
          */
         _refresh: function () {
-            this._fireLoadLocations();
-        },
-
-        /**
-         * Ater swap location callback function. It navigates to the swaped location
-         *
-         * @method _afterSwapCallback
-         * @protected
-         */
-        _afterSwapCallback: function () {
             this._fireLoadLocations();
         },
 

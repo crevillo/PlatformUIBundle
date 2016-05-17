@@ -891,7 +891,6 @@ YUI.add('ez-locationviewlocationstabview-tests', function (Y) {
                     that.location,
                     "The event facade should contain the location"
                 );
-                Assert.isFunction(e.afterSwapLocationCallback, 'The event facade should contain callback function');
             });
 
             swapButton.simulateGesture('tap', function () {
@@ -899,35 +898,6 @@ YUI.add('ez-locationviewlocationstabview-tests', function (Y) {
                     Y.Assert.isTrue(
                         eventFired,
                         "The `swapLocation` event should have been fired"
-                    );
-                });
-            });
-            this.wait();
-        },
-
-        "Should fire `loadLocations` event after swaping locations": function () {
-            var loadLocationsFired = false,
-                that = this;
-
-            this.view.on('swapLocation', function (e) {
-                e.afterSwapLocationCallback();
-            });
-            this.view.on('loadLocations', function (e) {
-                loadLocationsFired = true;
-
-                Assert.areSame(
-                    e.content,
-                    that.contentMock,
-                    'The event facade should contain the content'
-                );
-            });
-
-            this.view.render();
-            this.view.get('container').one('.ez-locations-swap-button').simulateGesture('tap', function () {
-                that.resume(function () {
-                    Y.Assert.isTrue(
-                        loadLocationsFired,
-                        "The `loadLocations` event should have been fired"
                     );
                 });
             });

@@ -29,7 +29,6 @@ YUI.add('ez-locationswapplugin-tests', function (Y) {
 
         "Should trigger content discovery widget on `swapLocation` event": function () {
             var contentDiscoverTriggered = false,
-                afterSwapLocationCallback = function () {},
                 containerContentType = new Y.Mock(),
                 nonContainerContentType = new Y.Mock();
 
@@ -52,19 +51,10 @@ YUI.add('ez-locationswapplugin-tests', function (Y) {
                     'The `contentDiscoveredHandler` param should be function'
                 );
                 Assert.isFalse(e.config.multiple, 'The `multiple` param in config should be set to TRUE');
-                Assert.isFunction(
-                    e.config.data.afterSwapLocationCallback,
-                    '`afterSwapLocationCallback` function should be provided in config.data'
-                );
-                Assert.areSame(
-                    afterSwapLocationCallback,
-                    e.config.data.afterSwapLocationCallback,
-                    '`afterSwapLocationCallback` function in config.data should be the one passed in `swapLocation` event'
-                );
                 Assert.isTrue(e.config.isSelectable, 'The `isSelectable` param in config should be set to TRUE');
             });
 
-            this.service.fire('swapLocation', {afterSwapLocationCallback: afterSwapLocationCallback});
+            this.service.fire('swapLocation', {});
 
             Assert.isTrue(
                 contentDiscoverTriggered,
@@ -79,12 +69,14 @@ YUI.add('ez-locationswapplugin-tests', function (Y) {
         setUp: function () {
             this.service = new Y.Base();
             this.view = new Y.View();
+            this.app = new Mock();
             this.view.addTarget(this.service);
             this.capi = new Mock();
             this.contentServiceMock = new Mock();
             this.contentJson = {
                 'id': '/content/Sergio/Aguero',
                 'name': 'Sergio Aguero',
+                'languageCode': 'esl-ES'
             };
             this.contentInfoMock = this._getContentInfoMock(this.contentJson);
             this.locationJson = {
@@ -113,6 +105,7 @@ YUI.add('ez-locationswapplugin-tests', function (Y) {
             delete this.plugin;
             delete this.view;
             delete this.service;
+            delete this.app;
         },
 
         _getLocationMock: function (attrs) {
@@ -149,6 +142,8 @@ YUI.add('ez-locationswapplugin-tests', function (Y) {
                             return attrs.id;
                         case 'name':
                             return attrs.name;
+                        case 'mainLanguageCode':
+                            return attrs.languageCode;
                         default:
                             Assert.fail('Trying to `get` incorrect attribute');
                             break;
@@ -168,25 +163,35 @@ YUI.add('ez-locationswapplugin-tests', function (Y) {
         },
 
         "Should swap locations and fire notifications": function () {
-            var afterSwapLocationCallbackCalled = false,
-                afterSwapLocationCallback = function () {
-                    afterSwapLocationCallbackCalled = true;
-                },
-                startNotificationFired = false,
+            var startNotificationFired = false,
                 successNotificationFired = false,
                 errorNotificationFired = false,
+                appNaviateCalled = false,
                 that = this;
+
+            this.service.set('app', {
+                navigateTo: function (routeName, params) {
+                    appNavigateCalled = true;
+
+                    Assert.areEqual('viewLocation', routeName, 'The route name should be `viewLocation`');
+                    Assert.areEqual(
+                        params.id,
+                        that.contentJson.resources.MainLocation,
+                        'Id of main location of content should be passed as id param'
+                    );
+                    Assert.areEqual(
+                        params.languageCode,
+                        that.contentJson.mainLanguageCode,
+                        'Main language code of content should be passed as language param'
+                    );
+                }
+            });
 
             this.service.on('contentDiscover', function (e) {
                 var config = {
                     selection: that._getSelection(),
                     target: {
-                        get: function (attr) {
-                            switch (attr) {
-                                case 'data':
-                                    return {afterSwapLocationCallback: afterSwapLocationCallback};
-                            }
-                        }
+                        get: function () {}
                     }
                 };
 
@@ -246,20 +251,20 @@ YUI.add('ez-locationswapplugin-tests', function (Y) {
                 }
             });
 
-            this.service.fire('swapLocation', {afterSwapLocationCallback: function () {}});
+            this.service.fire('swapLocation', {});
+
+            Mock.expect(this.app, {
+                method: 'navigateTo',
+                args: ['viewLocation', Mock.Value.Object],
+            });
 
             Assert.isTrue(startNotificationFired, 'Should fire notification with `started` state');
             Assert.isTrue(successNotificationFired, 'Should fire notification with `done` state');
             Assert.isFalse(errorNotificationFired, 'Should not fire notification with `error` state');
-            Assert.isTrue(afterSwapLocationCallbackCalled, 'Should call afterSwapLocationCallback function');
         },
 
         "Should fire notifications if swap fails": function () {
-            var afterSwapLocationCallbackCalled = false,
-                afterSwapLocationCallback = function () {
-                    afterSwapLocationCallbackCalled = true;
-                },
-                startNotificationFired = false,
+            var startNotificationFired = false,
                 successNotificationFired = false,
                 errorNotificationFired = false,
                 that = this;
@@ -333,14 +338,16 @@ YUI.add('ez-locationswapplugin-tests', function (Y) {
                 }
             });
 
-            this.service.fire('swapLocation', {afterSwapLocationCallback: function () {}});
+            this.service.fire('swapLocation', {});
 
             Assert.isTrue(startNotificationFired, 'Should fire notification with `started` state');
             Assert.isFalse(successNotificationFired, 'Should fire notification with `done` state');
             Assert.isTrue(errorNotificationFired, 'Should fire notification with `error` state');
-            Assert.isFalse(afterSwapLocationCallbackCalled, 'Should call afterCallback function');
         },
 
+        "Should navigate to the location when swap doesn't fail": function () {
+
+        }
     });
 
     registerTest = new Y.Test.Case(Y.eZ.Test.PluginRegisterTest);
